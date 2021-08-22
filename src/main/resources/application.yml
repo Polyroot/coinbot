@@ -1,0 +1,10 @@
+spring:
+  data:
+    mongodb:
+      database: coinbot
+      host: localhost
+      port: 27017
+
+binance:
+  endpints:
+    stream: "wss://stream.binance.com:9443/ws"
