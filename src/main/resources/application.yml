@@ -6,5 +6,5 @@ spring:
       port: 27017
 
 binance:
-  endpints:
+  endpoints:
     stream: "wss://stream.binance.com:9443/ws"

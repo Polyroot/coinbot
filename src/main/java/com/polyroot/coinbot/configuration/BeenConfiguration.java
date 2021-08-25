@@ -1,8 +1,9 @@
-package com.polyroot.coinbot.beens;
+package com.polyroot.coinbot.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.polyroot.coinbot.mapper.DepthMapper;
+import com.polyroot.coinbot.mapper.MarketSocketMapper;
 import org.mapstruct.factory.Mappers;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +27,11 @@ public class BeenConfiguration {
     @Bean
     public DepthMapper depthMapper() {
         return Mappers.getMapper(DepthMapper.class);
+    }
+
+    @Bean
+    public MarketSocketMapper marketSocketMapper() {
+        return Mappers.getMapper(MarketSocketMapper.class);
     }
 
 }
