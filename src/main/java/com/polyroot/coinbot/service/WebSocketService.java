@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.socket.WebSocketHandler;
 import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
 import org.springframework.web.reactive.socket.client.WebSocketClient;
@@ -43,7 +44,7 @@ public class WebSocketService {
     private MarketSocketRequestRepository marketSocketRequestRepository;
     @Autowired
     private MarketSocketResponseRepository marketSocketResponseRepository;
-    @Autowired
+    @Autowired @Qualifier("webSocketClient")
     private WebSocketClient client;
     @Autowired @Qualifier("objectMapper")
     private ObjectMapper objectMapper;
@@ -57,21 +58,22 @@ public class WebSocketService {
     @Value("${binance.endpoints.stream}")
     private String streamUrl;
 
-    public void start(MarketSocketRequestDto marketSocketRequestDto) {
+    public void wsConnect(MarketSocketRequestDto marketSocketRequestDto) {
 
-        client.execute(URI.create(streamUrl),
-                       session -> session.send(createRequest(marketSocketRequestDto, session))
-                               .thenMany(publisherResponse(session))
-                               .then())
-                .subscribe();
+        client.execute(
+                    URI.create(streamUrl),
+                    getWebSocketHandler(marketSocketRequestDto)
+                ).subscribe();
 
     }
 
-    private Mono<WebSocketMessage> createRequest(MarketSocketRequestDto marketSocketRequestDto,
-                                                 WebSocketSession session) {
-        String s = marketSocketRequestDto.toString();
-        WebSocketMessage webSocketMessage = session.textMessage(s);
-        return Mono.just(webSocketMessage);
+    private WebSocketHandler getWebSocketHandler(MarketSocketRequestDto marketSocketRequestDto) {
+        return session -> Mono.just(marketSocketRequestDto)
+                .map(MarketSocketRequestDto::toString)
+                .map(session::textMessage)
+                .as(session::send)
+                .thenMany(publisherResponse(session))
+                .then();
     }
 
     private Flux<Object> publisherResponse(WebSocketSession session) {
@@ -136,7 +138,7 @@ public class WebSocketService {
     };
 
 
-    public void logRequest(MarketSocketRequestDto marketSocketRequestDto) {
+    public void saveMarketSocketRequestToDb(MarketSocketRequestDto marketSocketRequestDto) {
         MarketSocketRequest marketSocketRequest = marketMapper.marketSocketRequestDtoToMarketSocketRequest(marketSocketRequestDto);
         marketSocketRequestRepository.save(marketSocketRequest)
                 .subscribe();

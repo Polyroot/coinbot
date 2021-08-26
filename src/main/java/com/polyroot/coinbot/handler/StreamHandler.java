@@ -27,8 +27,8 @@ public class StreamHandler {
         Mono<ServerResponse> notFound = ServerResponse.notFound().build();
 
         return request.bodyToMono(MarketSocketRequestDto.class)
-                .doOnNext(webSocketService::logRequest)
-                .doOnNext(webSocketService::start)
+                .doOnNext(webSocketService::saveMarketSocketRequestToDb)
+                .doOnNext(webSocketService::wsConnect)
                 .flatMap(marketSocketRequestDto -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(monoManager.getOutput(marketSocketRequestDto.getId().toString()), MarketSocketResponseDto.class))

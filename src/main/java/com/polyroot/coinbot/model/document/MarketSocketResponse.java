@@ -12,7 +12,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Getter @Setter
 public class MarketSocketResponse {
 
-    private String result;
+    private Object result;
     private Integer requestId;
     @Id
     private String id;

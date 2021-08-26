@@ -1,5 +1,6 @@
 package com.polyroot.coinbot.configuration;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.polyroot.coinbot.mapper.DepthMapper;
@@ -21,6 +22,7 @@ public class BeenConfiguration {
     @Bean(name = "objectMapper")
     public ObjectMapper objectMapper() {
         return new ObjectMapper()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .registerModule(new JavaTimeModule());
     }
 

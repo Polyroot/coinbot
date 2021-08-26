@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MarketSocketResponseDto {
 
-    private String result;
+    private Object result;
     private Integer id;
 
     @Override
