@@ -5,6 +5,13 @@ spring:
       host: localhost
       port: 27017
 
+# rsocket для сервера, но у меня только клиент
+#  rsocket:
+#    server:
+#      port: 7000
+#  main:
+#    lazy-initialization: true
+
 binance:
   endpoints:
     stream: "wss://stream.binance.com:9443/ws"

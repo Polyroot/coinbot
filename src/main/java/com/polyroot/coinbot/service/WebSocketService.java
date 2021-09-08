@@ -14,6 +14,7 @@ import com.polyroot.coinbot.model.dto.MarketSocketResponseDto;
 import com.polyroot.coinbot.repository.DepthRepository;
 import com.polyroot.coinbot.repository.MarketSocketRequestRepository;
 import com.polyroot.coinbot.repository.MarketSocketResponseRepository;
+import com.polyroot.coinbot.streaming.manage.FluxAdaptersManager;
 import com.polyroot.coinbot.streaming.manage.MonoAdaptersManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +26,6 @@ import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
 import org.springframework.web.reactive.socket.client.WebSocketClient;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.util.function.Consumer;
@@ -67,12 +67,17 @@ public class WebSocketService {
 
     }
 
+    @Autowired @Qualifier("FluxManager")
+    private FluxAdaptersManager fluxAdaptersManager;
+
     private WebSocketHandler getWebSocketHandler(MarketSocketRequestDto marketSocketRequestDto) {
-        return session -> Mono.just(marketSocketRequestDto)
-                .map(MarketSocketRequestDto::toString)
-                .map(session::textMessage)
-                .as(session::send)
-                .thenMany(publisherResponse(session))
+
+        Consumer test = fluxAdaptersManager.getSink("test");
+        test.accept(marketSocketRequestDto.toString());
+        Flux<String> stream = fluxAdaptersManager.getStream("test");
+
+        return session -> session.send(stream.map(session::textMessage))
+                .and(publisherResponse(session))
                 .then();
     }
 

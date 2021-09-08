@@ -15,14 +15,20 @@
     <description>coinbot</description>
     <properties>
         <java.version>11</java.version>
+        <maven-compiler.version>3.8.1</maven-compiler.version>
         <mapstruct.version>1.4.2.Final</mapstruct.version>
         <mapstruct-lombok.version>0.2.0</mapstruct-lombok.version>
         <plombok.version>1.18.18</plombok.version>
+        <rsockett.version>0.11.13</rsockett.version>
     </properties>
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -32,6 +38,20 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-rsocket</artifactId>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>io.rsocket</groupId>-->
+<!--            <artifactId>rsocket-core</artifactId>-->
+<!--            <version>${rsockett.version}</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>io.rsocket</groupId>-->
+<!--            <artifactId>rsocket-transport-netty</artifactId>-->
+<!--            <version>${rsockett.version}</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
@@ -63,6 +83,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>2.5.3</version>
                 <configuration>
                     <excludes>
                         <exclude>
@@ -75,7 +96,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>${maven-compiler.version}</version>
                 <configuration>
                     <annotationProcessorPaths>
                         <path>
