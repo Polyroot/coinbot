@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.socket.WebSocketHandler;
 import org.springframework.web.reactive.socket.WebSocketMessage;
@@ -58,22 +59,19 @@ public class WebSocketService {
     @Value("${binance.endpoints.stream}")
     private String streamUrl;
 
-    public void wsConnect(MarketSocketRequestDto marketSocketRequestDto) {
-
+    @Bean
+    public void wsConnect(){
         client.execute(
-                    URI.create(streamUrl),
-                    getWebSocketHandler(marketSocketRequestDto)
-                ).subscribe();
-
+                URI.create(streamUrl),
+                getWebSocketHandler()
+        ).subscribe();
     }
 
     @Autowired @Qualifier("FluxManager")
     private FluxAdaptersManager fluxAdaptersManager;
 
-    private WebSocketHandler getWebSocketHandler(MarketSocketRequestDto marketSocketRequestDto) {
+    private WebSocketHandler getWebSocketHandler() {
 
-        Consumer test = fluxAdaptersManager.getSink("test");
-        test.accept(marketSocketRequestDto.toString());
         Flux<String> stream = fluxAdaptersManager.getStream("test");
 
         return session -> session.send(stream.map(session::textMessage))

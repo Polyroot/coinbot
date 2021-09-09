@@ -3,6 +3,7 @@ package com.polyroot.coinbot.handler;
 import com.polyroot.coinbot.model.dto.MarketSocketRequestDto;
 import com.polyroot.coinbot.model.dto.MarketSocketResponseDto;
 import com.polyroot.coinbot.service.WebSocketService;
+import com.polyroot.coinbot.streaming.manage.FluxAdaptersManager;
 import com.polyroot.coinbot.streaming.manage.MonoAdaptersManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -15,12 +16,12 @@ import reactor.core.publisher.Mono;
 @Component
 public class StreamHandler {
 
-
     @Autowired
     private WebSocketService webSocketService;
     @Autowired @Qualifier("MonoWireManager")
     private MonoAdaptersManager monoManager;
-
+    @Autowired @Qualifier("FluxManager")
+    private FluxAdaptersManager fluxAdaptersManager;
 
     public Mono<ServerResponse> start(ServerRequest request) {
 
@@ -28,7 +29,7 @@ public class StreamHandler {
 
         return request.bodyToMono(MarketSocketRequestDto.class)
                 .doOnNext(webSocketService::saveMarketSocketRequestToDb)
-                .doOnNext(webSocketService::wsConnect)
+                .doOnNext(marketSocketRequestDto -> fluxAdaptersManager.getSink("test").accept(marketSocketRequestDto.toString()))
                 .flatMap(marketSocketRequestDto -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(monoManager.getOutput(marketSocketRequestDto.getId().toString()), MarketSocketResponseDto.class))
