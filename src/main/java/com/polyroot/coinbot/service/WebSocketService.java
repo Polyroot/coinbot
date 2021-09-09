@@ -74,7 +74,9 @@ public class WebSocketService {
 
         Flux<String> stream = fluxAdaptersManager.getStream("test");
 
-        return session -> session.send(stream.map(session::textMessage))
+        return session -> stream
+                .map(session::textMessage)
+                .as(session::send)
                 .and(publisherResponse(session))
                 .then();
     }
