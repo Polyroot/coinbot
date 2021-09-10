@@ -7,12 +7,12 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class FluxManagerConfig {
-    @Bean(name="FluxManager")
+    @Bean
     public FluxAdaptersManager initFluxManager(){
         return new FluxAdaptersManager();
     }
 
-    @Bean(name="MonoWireManager")
+    @Bean
     public MonoAdaptersManager initMonoManager(){
         return new MonoAdaptersManager();
     }

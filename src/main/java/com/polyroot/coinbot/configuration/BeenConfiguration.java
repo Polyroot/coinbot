@@ -14,12 +14,12 @@ import org.springframework.web.reactive.socket.client.WebSocketClient;
 @Configuration
 public class BeenConfiguration {
 
-    @Bean(name = "webSocketClient")
+    @Bean
     public WebSocketClient webSocketClient(){
         return new ReactorNettyWebSocketClient();
     }
 
-    @Bean(name = "objectMapper")
+    @Bean
     public ObjectMapper objectMapper() {
         return new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
