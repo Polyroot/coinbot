@@ -3,10 +3,10 @@ package com.polyroot.coinbot.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.polyroot.coinbot.mapper.DepthMapper;
 import com.polyroot.coinbot.mapper.MarketSocketMapper;
 import com.polyroot.coinbot.model.document.Depth;
-import com.polyroot.coinbot.model.document.MarketSocketRequest;
 import com.polyroot.coinbot.model.document.MarketSocketResponse;
 import com.polyroot.coinbot.model.dto.DepthResponse;
 import com.polyroot.coinbot.model.dto.MarketSocketRequestDto;
@@ -16,6 +16,7 @@ import com.polyroot.coinbot.repository.MarketSocketRequestRepository;
 import com.polyroot.coinbot.repository.MarketSocketResponseRepository;
 import com.polyroot.coinbot.streaming.manage.FluxAdaptersManager;
 import com.polyroot.coinbot.streaming.manage.MonoAdaptersManager;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -27,6 +28,7 @@ import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
 import org.springframework.web.reactive.socket.client.WebSocketClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.util.function.Consumer;
@@ -72,9 +74,11 @@ public class WebSocketService {
 
     private WebSocketHandler getWebSocketHandler() {
 
-        Flux<String> stream = fluxAdaptersManager.getStream("test");
+        Flux<MarketSocketRequestDto> marketSocketRequestDtoStream =
+                fluxAdaptersManager.getStream("market-socket-request-dto");
 
-        return session -> stream
+        return session -> marketSocketRequestDtoStream
+                .mapNotNull(marketSocketRequestDto -> marketSocketRequestDto.toString(objectMapper))
                 .map(session::textMessage)
                 .as(session::send)
                 .and(publisherResponse(session))
@@ -84,8 +88,8 @@ public class WebSocketService {
     private Flux<Object> publisherResponse(WebSocketSession session) {
         return session.receive()
                 .map(WebSocketMessage::getPayloadAsText)
-                .map(payloadToJsonNode)
-                .map(jsonNodeToDto)
+                .flatMap(payloadToJsonNode)
+                .mapNotNull(jsonNodeToDto)
                 .doOnNext(sendMarketSocketResponseDto)
                 .map(dtoToDocument)
                 .doOnNext(saveDocumentToDB)
@@ -120,14 +124,10 @@ public class WebSocketService {
         return payloadAsDto;
     };
 
-    private final Function<String, JsonNode> payloadToJsonNode = payloadAsText -> {
-        try {
-            return objectMapper.readTree(payloadAsText);
-        } catch (JsonProcessingException e) {
-            log.debug(e.getLocalizedMessage(), e);
-        }
-        return null;
-    };
+    private final Function<String, Mono<JsonNode>> payloadToJsonNode = payloadAsText ->
+         Mono.fromCallable(() -> objectMapper.readTree(payloadAsText))
+                 .doOnError(e -> log.debug(e.getLocalizedMessage(), e))
+                 .onErrorReturn(NullNode.getInstance());
 
     private final Function<JsonNode, Object> jsonNodeToDto = payloadAsJsonNode -> {
         try {
@@ -142,10 +142,22 @@ public class WebSocketService {
         return null;
     };
 
+    @Getter
+    private final Function<Mono<MarketSocketRequestDto>, Mono<MarketSocketRequestDto>> businessLogic =
+            marketSocketRequestDto -> {
 
-    public void saveMarketSocketRequestToDb(MarketSocketRequestDto marketSocketRequestDto) {
-        MarketSocketRequest marketSocketRequest = marketMapper.marketSocketRequestDtoToMarketSocketRequest(marketSocketRequestDto);
-        marketSocketRequestRepository.save(marketSocketRequest)
+                Consumer<MarketSocketRequestDto> marketSocketRequestDtoSink =
+                        fluxAdaptersManager.getSink("market-socket-request-dto");
+
+                return marketSocketRequestDto
+                        .doOnNext(saveMarketSocketRequestToDb())
+                        .doOnNext(marketSocketRequestDtoSink);
+            };
+
+    private Consumer<MarketSocketRequestDto> saveMarketSocketRequestToDb() {
+        return marketSocketRequestDto -> Mono.just(marketSocketRequestDto)
+                .map(marketMapper::marketSocketRequestDtoToMarketSocketRequest)
+                .flatMap(marketSocketRequestRepository::save)
                 .subscribe();
     }
 }

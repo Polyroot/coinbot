@@ -20,16 +20,13 @@ public class StreamHandler {
     private WebSocketService webSocketService;
     @Autowired @Qualifier("MonoWireManager")
     private MonoAdaptersManager monoManager;
-    @Autowired @Qualifier("FluxManager")
-    private FluxAdaptersManager fluxAdaptersManager;
 
     public Mono<ServerResponse> start(ServerRequest request) {
 
         Mono<ServerResponse> notFound = ServerResponse.notFound().build();
 
         return request.bodyToMono(MarketSocketRequestDto.class)
-                .doOnNext(webSocketService::saveMarketSocketRequestToDb)
-                .doOnNext(marketSocketRequestDto -> fluxAdaptersManager.getSink("test").accept(marketSocketRequestDto.toString()))
+                .transform(webSocketService.getBusinessLogic())
                 .flatMap(marketSocketRequestDto -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(monoManager.getOutput(marketSocketRequestDto.getId().toString()), MarketSocketResponseDto.class))

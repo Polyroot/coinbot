@@ -3,10 +3,7 @@ package com.polyroot.coinbot.model.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Set;
@@ -17,6 +14,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include;
 @NoArgsConstructor
 @Getter@Setter
 @Slf4j
+@ToString
 public class MarketSocketRequestDto {
 
     private Method method;
@@ -24,11 +22,9 @@ public class MarketSocketRequestDto {
     private Set<String> params;
     private Integer id;
 
-    @Override
-    public String toString() {
+    public String toString(ObjectMapper objectMapper) {
         try {
-            ObjectMapper om = new ObjectMapper();
-            return om.writeValueAsString(this);
+            return objectMapper.writeValueAsString(this);
         } catch (JsonProcessingException e) {
             log.debug(e.getLocalizedMessage(), e);
         }
