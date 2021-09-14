@@ -1,15 +1,17 @@
 package com.polyroot.coinbot.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
-import com.polyroot.coinbot.mapper.DepthMapper;
-import com.polyroot.coinbot.mapper.MarketSocketMapper;
+import com.polyroot.coinbot.mapper.DtoMapper;
+import com.polyroot.coinbot.model.EventType;
+import com.polyroot.coinbot.model.document.AggTrade;
 import com.polyroot.coinbot.model.document.Depth;
 import com.polyroot.coinbot.model.document.MarketSocketResponse;
+import com.polyroot.coinbot.model.dto.AggTradeResponse;
 import com.polyroot.coinbot.model.dto.DepthResponse;
 import com.polyroot.coinbot.model.dto.MarketSocketResponseDto;
+import com.polyroot.coinbot.repository.AggTradeRepository;
 import com.polyroot.coinbot.repository.DepthRepository;
 import com.polyroot.coinbot.repository.MarketSocketResponseRepository;
 import com.polyroot.coinbot.streaming.manage.MonoAdaptersManager;
@@ -23,8 +25,7 @@ import reactor.core.publisher.Mono;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static com.polyroot.coinbot.service.Predicates.isEvent;
-import static com.polyroot.coinbot.service.Predicates.isResult;
+import static com.polyroot.coinbot.service.Predicates.*;
 
 @Service
 @Slf4j
@@ -33,13 +34,13 @@ public class WebSocketService {
     @Autowired
     private DepthRepository depthRepository;
     @Autowired
+    private AggTradeRepository aggTradeRepository;
+    @Autowired
     private MarketSocketResponseRepository marketSocketResponseRepository;
     @Autowired
     private ObjectMapper objectMapper;
     @Autowired
-    private DepthMapper depthMapper;
-    @Autowired
-    private MarketSocketMapper marketMapper;
+    private DtoMapper dtoMapper;
     @Autowired
     private MonoAdaptersManager monoManager;
 
@@ -47,7 +48,7 @@ public class WebSocketService {
     private final Function<Flux<String>, Flux<Object>> businessLogic =
             payload -> payload
                     .flatMap(this.payloadToJsonNode)
-                    .mapNotNull(this.jsonNodeToDto)
+                    .flatMap(this.jsonNodeToDto)
                     .doOnNext(this.sendMarketSocketResponseDto)
                     .map(this.dtoToDocument)
                     .doOnNext(this.saveDocumentToDB)
@@ -58,18 +59,29 @@ public class WebSocketService {
                  .doOnError(e -> log.debug(e.getLocalizedMessage(), e))
                  .onErrorReturn(NullNode.getInstance());
 
-    private final Function<JsonNode, Object> jsonNodeToDto = payloadAsJsonNode -> {
-        try {
-            if (isEvent.test(payloadAsJsonNode)) {
-                return objectMapper.treeToValue(payloadAsJsonNode, DepthResponse.class);
-            } else if (isResult.test(payloadAsJsonNode)) {
-                return objectMapper.treeToValue(payloadAsJsonNode, MarketSocketResponseDto.class);
-            }
-        } catch (JsonProcessingException e) {
-            log.debug(e.getLocalizedMessage(), e);
+    private final Function<JsonNode, Mono<Object>> jsonNodeToDto = payloadAsJsonNode -> {
+
+        if (isEvent.test(payloadAsJsonNode)) {
+
+            return Flux.fromArray(EventType.values())
+                    .filter(eventTypePredicate(payloadAsJsonNode))
+                    .flatMap(eventType -> getMappedDto(payloadAsJsonNode, eventType.getAClass()))
+                    .last();
+
+        } else if (isResult.test(payloadAsJsonNode)) {
+            return getMappedDto(payloadAsJsonNode, MarketSocketResponseDto.class);
         }
-        return null;
+
+        return Mono.empty();
     };
+
+
+    private Mono<Object> getMappedDto(JsonNode payloadAsJsonNode, Class aClass) {
+        return Mono.fromCallable(() -> objectMapper.treeToValue(payloadAsJsonNode, aClass))
+                .doOnError(e -> log.debug(e.getLocalizedMessage(), e));
+//todo                .onErrorReturn(); по хорошему сюда нужно пихать dto-шки ошибок
+    }
+
 
     private final Consumer<Object> sendMarketSocketResponseDto = obj -> {
         if (obj instanceof MarketSocketResponseDto) {
@@ -81,10 +93,13 @@ public class WebSocketService {
     private final Function<Object, Object> dtoToDocument = payloadAsDto -> {
         if (payloadAsDto instanceof DepthResponse) {
             DepthResponse depthResponse = (DepthResponse) payloadAsDto;
-            return depthMapper.depthResponseToDepth(depthResponse);
+            return dtoMapper.depthResponseToDepth(depthResponse);
+        } else if (payloadAsDto instanceof AggTradeResponse) {
+            AggTradeResponse aggTradeResponse = (AggTradeResponse) payloadAsDto;
+            return dtoMapper.aggTradeResponseToAggTrade(aggTradeResponse);
         } else if (payloadAsDto instanceof MarketSocketResponseDto) {
             MarketSocketResponseDto marketSocketResponseDto = (MarketSocketResponseDto) payloadAsDto;
-            return marketMapper.marketSocketResponseDtoToMarketSocketResponse(marketSocketResponseDto);
+            return dtoMapper.marketSocketResponseDtoToMarketSocketResponse(marketSocketResponseDto);
         }
         return payloadAsDto;
     };
@@ -96,6 +111,9 @@ public class WebSocketService {
         } else if (obj instanceof MarketSocketResponse) {
             MarketSocketResponse marketSocketResponse = (MarketSocketResponse) obj;
             marketSocketResponseRepository.save(marketSocketResponse).subscribe();
+        } else if (obj instanceof AggTrade) {
+            AggTrade aggTrade = (AggTrade) obj;
+            aggTradeRepository.save(aggTrade).subscribe();
         }
     };
 }

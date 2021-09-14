@@ -1,6 +1,6 @@
 package com.polyroot.coinbot.service;
 
-import com.polyroot.coinbot.mapper.MarketSocketMapper;
+import com.polyroot.coinbot.mapper.DtoMapper;
 import com.polyroot.coinbot.model.dto.MarketSocketRequestDto;
 import com.polyroot.coinbot.repository.MarketSocketRequestRepository;
 import com.polyroot.coinbot.streaming.manage.FluxAdaptersManager;
@@ -20,7 +20,7 @@ public class StreamService {
     @Autowired
     private MarketSocketRequestRepository marketSocketRequestRepository;
     @Autowired
-    private MarketSocketMapper marketMapper;
+    private DtoMapper dtoMapper;
     @Autowired
     private FluxAdaptersManager fluxAdaptersManager;
 
@@ -38,7 +38,7 @@ public class StreamService {
 
     private Consumer<MarketSocketRequestDto> saveMarketSocketRequestToDb() {
         return marketSocketRequestDto -> Mono.just(marketSocketRequestDto)
-                .map(marketMapper::marketSocketRequestDtoToMarketSocketRequest)
+                .map(dtoMapper::marketSocketRequestDtoToMarketSocketRequest)
                 .flatMap(marketSocketRequestRepository::save)
                 .subscribe();
     }
