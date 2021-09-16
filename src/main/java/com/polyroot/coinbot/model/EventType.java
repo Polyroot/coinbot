@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.polyroot.coinbot.model.dto.AggTradeResponse;
 import com.polyroot.coinbot.model.dto.DepthResponse;
+import com.polyroot.coinbot.model.dto.TradeResponse;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

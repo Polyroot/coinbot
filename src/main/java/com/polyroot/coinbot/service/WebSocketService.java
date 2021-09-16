@@ -59,27 +59,26 @@ public class WebSocketService {
                  .doOnError(e -> log.debug(e.getLocalizedMessage(), e))
                  .onErrorReturn(NullNode.getInstance());
 
-    private final Function<JsonNode, Mono<Object>> jsonNodeToDto = payloadAsJsonNode -> {
+    private final Function<JsonNode, Flux<Object>> jsonNodeToDto = payloadAsJsonNode -> {
 
         if (isEvent.test(payloadAsJsonNode)) {
 
             return Flux.fromArray(EventType.values())
                     .filter(eventTypePredicate(payloadAsJsonNode))
-                    .flatMap(eventType -> getMappedDto(payloadAsJsonNode, eventType.getAClass()))
-                    .last();
+                    .flatMap(eventType -> getMappedDto(payloadAsJsonNode, eventType.getAClass()));
 
         } else if (isResult.test(payloadAsJsonNode)) {
-            return getMappedDto(payloadAsJsonNode, MarketSocketResponseDto.class);
+            return Flux.from(getMappedDto(payloadAsJsonNode, MarketSocketResponseDto.class));
         }
 
-        return Mono.empty();
+        return Flux.empty();
     };
 
 
     private Mono<Object> getMappedDto(JsonNode payloadAsJsonNode, Class aClass) {
         return Mono.fromCallable(() -> objectMapper.treeToValue(payloadAsJsonNode, aClass))
-                .doOnError(e -> log.debug(e.getLocalizedMessage(), e));
-//todo                .onErrorReturn(); по хорошему сюда нужно пихать dto-шки ошибок
+                .doOnError(e -> log.debug(e.getLocalizedMessage(), e))
+                .onErrorReturn("error mapping payloadAsJsonNode to dto");
     }
 
 
