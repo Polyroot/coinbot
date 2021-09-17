@@ -5,7 +5,7 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -18,14 +18,14 @@ public class AggTrade {
     @Id
     private String id;
     private EventType eventType;
-    private Instant eventTime;
+    private LocalDateTime eventTime;
     private String symbol;
     private Long aggTradeId;
     private Float price;
     private Float quantity;
     private Long firstTradeID;
     private Long lastTradeID;
-    private Instant tradeTime;
+    private LocalDateTime tradeTime;
     private Boolean buyer;
 
 }

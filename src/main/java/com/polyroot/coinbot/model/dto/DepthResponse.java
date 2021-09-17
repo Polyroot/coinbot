@@ -6,7 +6,7 @@ import com.polyroot.coinbot.model.EventType;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Getter@Setter
@@ -15,7 +15,7 @@ public class DepthResponse {
     @JsonProperty("e")
     private EventType eventType;
     @JsonProperty("E")
-    private Instant eventTime;
+    private ZonedDateTime eventTime;
     @JsonProperty("s")
     private String symbol;
     @JsonProperty("U")

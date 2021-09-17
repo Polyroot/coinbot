@@ -1,13 +1,7 @@
 package com.polyroot.coinbot.mapper;
 
-import com.polyroot.coinbot.model.document.AggTrade;
-import com.polyroot.coinbot.model.document.Depth;
-import com.polyroot.coinbot.model.document.MarketSocketRequest;
-import com.polyroot.coinbot.model.document.MarketSocketResponse;
-import com.polyroot.coinbot.model.dto.AggTradeResponse;
-import com.polyroot.coinbot.model.dto.DepthResponse;
-import com.polyroot.coinbot.model.dto.MarketSocketRequestDto;
-import com.polyroot.coinbot.model.dto.MarketSocketResponseDto;
+import com.polyroot.coinbot.model.document.*;
+import com.polyroot.coinbot.model.dto.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -33,4 +27,24 @@ public interface DtoMapper {
     @Mapping(target = "id", ignore = true)
     AggTrade aggTradeResponseToAggTrade(AggTradeResponse aggTradeResponse);
 
+    @Mapping(target = "id", ignore = true)
+    Trade tradeResponseToTrade(TradeResponse tradeResponse);
+
+    @Mapping(target = "id", ignore = true)
+    KLine kLineResponseToKLine(KLineResponse tradeResponse);
+
+    @Mapping(target = "id", ignore = true)
+    MiniTicker miniTickerResponseToMiniTicker(MiniTickerResponse miniTickerResponse);
+
+    @Mapping(target = "id", ignore = true)
+    Ticker tickerResponseToTicker(TickerResponse tickerResponse);
+
+    @Mapping(target = "id", ignore = true)
+    BookTicker bookTickerResponseToBookTicker(BookTickerResponse bookTickerResponse);
+
+    @Mapping(target = "id", ignore = true)
+    MarkPrice markPriceResponseToMarkPrice(MarkPriceResponse markPriceResponse);
+
+    @Mapping(target = "id", ignore = true)
+    ForceOrder forceOrderResponseToForceOrder(ForceOrderResponse forceOrderResponse);
 }

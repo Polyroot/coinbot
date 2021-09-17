@@ -5,15 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.polyroot.coinbot.mapper.DtoMapper;
 import com.polyroot.coinbot.model.EventType;
-import com.polyroot.coinbot.model.document.AggTrade;
-import com.polyroot.coinbot.model.document.Depth;
-import com.polyroot.coinbot.model.document.MarketSocketResponse;
-import com.polyroot.coinbot.model.dto.AggTradeResponse;
-import com.polyroot.coinbot.model.dto.DepthResponse;
-import com.polyroot.coinbot.model.dto.MarketSocketResponseDto;
-import com.polyroot.coinbot.repository.AggTradeRepository;
-import com.polyroot.coinbot.repository.DepthRepository;
-import com.polyroot.coinbot.repository.MarketSocketResponseRepository;
+import com.polyroot.coinbot.model.document.*;
+import com.polyroot.coinbot.model.dto.*;
+import com.polyroot.coinbot.repository.*;
 import com.polyroot.coinbot.streaming.manage.MonoAdaptersManager;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +29,20 @@ public class WebSocketService {
     private DepthRepository depthRepository;
     @Autowired
     private AggTradeRepository aggTradeRepository;
+    @Autowired
+    private TradeRepository tradeRepository;
+    @Autowired
+    private KLineRepository kLineRepository;
+    @Autowired
+    private MiniTickerRepository miniTickerRepository;
+    @Autowired
+    private TickerRepository tickerRepository;
+    @Autowired
+    private BookTickerRepository bookTickerRepository;
+    @Autowired
+    private MarkPriceRepository markPriceRepository;
+    @Autowired
+    private ForceOrderRepository forceOrderRepository;
     @Autowired
     private MarketSocketResponseRepository marketSocketResponseRepository;
     @Autowired
@@ -90,29 +98,72 @@ public class WebSocketService {
     };
 
     private final Function<Object, Object> dtoToDocument = payloadAsDto -> {
-        if (payloadAsDto instanceof DepthResponse) {
+        if (payloadAsDto instanceof MarketSocketResponseDto) {
+            MarketSocketResponseDto marketSocketResponseDto = (MarketSocketResponseDto) payloadAsDto;
+            return dtoMapper.marketSocketResponseDtoToMarketSocketResponse(marketSocketResponseDto);
+        } else if (payloadAsDto instanceof DepthResponse) {
             DepthResponse depthResponse = (DepthResponse) payloadAsDto;
             return dtoMapper.depthResponseToDepth(depthResponse);
         } else if (payloadAsDto instanceof AggTradeResponse) {
             AggTradeResponse aggTradeResponse = (AggTradeResponse) payloadAsDto;
             return dtoMapper.aggTradeResponseToAggTrade(aggTradeResponse);
-        } else if (payloadAsDto instanceof MarketSocketResponseDto) {
-            MarketSocketResponseDto marketSocketResponseDto = (MarketSocketResponseDto) payloadAsDto;
-            return dtoMapper.marketSocketResponseDtoToMarketSocketResponse(marketSocketResponseDto);
+        } else if (payloadAsDto instanceof TradeResponse) {
+            TradeResponse tradeResponse = (TradeResponse) payloadAsDto;
+            return dtoMapper.tradeResponseToTrade(tradeResponse);
+        } else if (payloadAsDto instanceof KLineResponse) {
+            KLineResponse kLineResponse = (KLineResponse) payloadAsDto;
+            return dtoMapper.kLineResponseToKLine(kLineResponse);
+        } else if (payloadAsDto instanceof MiniTickerResponse) {
+            MiniTickerResponse miniTickerResponse = (MiniTickerResponse) payloadAsDto;
+            return dtoMapper.miniTickerResponseToMiniTicker(miniTickerResponse);
+        } else if (payloadAsDto instanceof TickerResponse) {
+            TickerResponse tickerResponse = (TickerResponse) payloadAsDto;
+            return dtoMapper.tickerResponseToTicker(tickerResponse);
+        } else if (payloadAsDto instanceof BookTickerResponse) {
+            BookTickerResponse bookTickerResponse = (BookTickerResponse) payloadAsDto;
+            return dtoMapper.bookTickerResponseToBookTicker(bookTickerResponse);
+        } else if (payloadAsDto instanceof MarkPriceResponse) {
+            MarkPriceResponse markPriceResponse = (MarkPriceResponse) payloadAsDto;
+            return dtoMapper.markPriceResponseToMarkPrice(markPriceResponse);
+        } else if (payloadAsDto instanceof ForceOrderResponse) {
+            ForceOrderResponse forceOrderResponse = (ForceOrderResponse) payloadAsDto;
+            return dtoMapper.forceOrderResponseToForceOrder(forceOrderResponse);
         }
         return payloadAsDto;
     };
 
     private final Consumer<Object> saveDocumentToDB = obj -> {
-        if (obj instanceof Depth) {
-            Depth depth = (Depth) obj;
-            depthRepository.save(depth).subscribe();
-        } else if (obj instanceof MarketSocketResponse) {
+        if (obj instanceof MarketSocketResponse) {
             MarketSocketResponse marketSocketResponse = (MarketSocketResponse) obj;
             marketSocketResponseRepository.save(marketSocketResponse).subscribe();
+        } else if (obj instanceof Depth) {
+            Depth depth = (Depth) obj;
+            depthRepository.save(depth).subscribe();
         } else if (obj instanceof AggTrade) {
             AggTrade aggTrade = (AggTrade) obj;
             aggTradeRepository.save(aggTrade).subscribe();
+        } else if (obj instanceof Trade) {
+            Trade trade = (Trade) obj;
+            tradeRepository.save(trade).subscribe();
+        } else if (obj instanceof KLine) {
+            KLine kLine = (KLine) obj;
+            kLineRepository.save(kLine).subscribe();
+        } else if (obj instanceof MiniTicker) {
+            MiniTicker miniTicker = (MiniTicker) obj;
+            miniTickerRepository.save(miniTicker).subscribe();
+        } else if (obj instanceof Ticker) {
+            Ticker ticker = (Ticker) obj;
+            tickerRepository.save(ticker).subscribe();
+        } else if (obj instanceof BookTicker) {
+            BookTicker bookTicker = (BookTicker) obj;
+            bookTickerRepository.save(bookTicker).subscribe();
+        } else if (obj instanceof MarkPrice) {
+            MarkPrice markPrice = (MarkPrice) obj;
+            markPriceRepository.save(markPrice).subscribe();
+        } else if (obj instanceof ForceOrder) {
+            ForceOrder forceOrder = (ForceOrder) obj;
+            forceOrderRepository.save(forceOrder).subscribe();
         }
+
     };
 }

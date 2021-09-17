@@ -10,6 +10,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.socket.client.ReactorNettyWebSocketClient;
 import org.springframework.web.reactive.socket.client.WebSocketClient;
 
+import java.time.ZoneId;
+import java.util.TimeZone;
+
 @Configuration
 public class BeenConfiguration {
 
@@ -22,6 +25,8 @@ public class BeenConfiguration {
     public ObjectMapper objectMapper() {
         return new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false)
+                .setTimeZone(TimeZone.getTimeZone(ZoneId.of("Europe/Moscow")))
                 .registerModule(new JavaTimeModule());
     }
 

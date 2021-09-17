@@ -6,7 +6,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -14,16 +13,20 @@ import java.util.List;
 @Document
 @ToString
 @Getter@Setter
-public class Depth {
+public class Trade {
 
     @Id
     private String id;
     private EventType eventType;
     private LocalDateTime eventTime;
     private String symbol;
-    private Long eventFirstUpdateId;
-    private Long eventFinalUpdateId;
-    private List<List<Float>> bids;
-    private List<List<Float>> asks;
+    private LocalDateTime time;
+    private Float price;
+    private Float quantity;
+    private Long firstTradeID;
+    private Long lastTradeID;
+    private LocalDateTime tradeTime;
+    private Boolean buyer;
+    private Boolean buyerM;
 
 }

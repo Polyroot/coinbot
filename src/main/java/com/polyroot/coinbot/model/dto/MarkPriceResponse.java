@@ -7,8 +7,9 @@ import lombok.Setter;
 
 import java.time.ZonedDateTime;
 
-@Getter @Setter
-public class AggTradeResponse {
+@Getter
+@Setter
+public class MarkPriceResponse {
 
     @JsonProperty("e")
     private EventType eventType;
@@ -16,19 +17,15 @@ public class AggTradeResponse {
     private ZonedDateTime eventTime;
     @JsonProperty("s")
     private String symbol;
-    @JsonProperty("a")
-    private Long aggTradeId;
     @JsonProperty("p")
-    private Float price;
-    @JsonProperty("q")
-    private Float quantity;
-    @JsonProperty("f")
-    private Long firstTradeID;
-    @JsonProperty("l")
-    private Long lastTradeID;
+    private Float markPrice;
+    @JsonProperty("i")
+    private Float indexPrice;
+    @JsonProperty("P")
+    private Float estimatedSettlePrice;
+    @JsonProperty("r")
+    private Float fundingRate;
     @JsonProperty("T")
-    private ZonedDateTime tradeTime;
-    @JsonProperty("m")
-    private Boolean buyer;
+    private ZonedDateTime nextFundingTime;
 
 }
