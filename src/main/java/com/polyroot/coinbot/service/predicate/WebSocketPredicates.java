@@ -1,15 +1,12 @@
-package com.polyroot.coinbot.service;
+package com.polyroot.coinbot.service.predicate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.polyroot.coinbot.model.EventType;
-import com.polyroot.coinbot.model.dto.Method;
 
 import java.util.Objects;
 import java.util.function.Predicate;
 
-import static com.polyroot.coinbot.model.EventType.*;
-
-public class Predicates {
+public class WebSocketPredicates {
 
     public final static Predicate<JsonNode> isEvent = payloadAsJsonNode
             -> payloadAsJsonNode.has("e");

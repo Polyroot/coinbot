@@ -11,6 +11,7 @@ import com.polyroot.coinbot.repository.*;
 import com.polyroot.coinbot.streaming.manage.MonoAdaptersManager;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -19,7 +20,8 @@ import reactor.core.publisher.Mono;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static com.polyroot.coinbot.service.Predicates.*;
+
+import static com.polyroot.coinbot.service.predicate.WebSocketPredicates.*;
 
 @Service
 @Slf4j
@@ -45,6 +47,9 @@ public class WebSocketService {
     private ForceOrderRepository forceOrderRepository;
     @Autowired
     private MarketSocketResponseRepository marketSocketResponseRepository;
+
+    @Autowired
+    private DepthServiceImpl depthService;
     @Autowired
     private ObjectMapper objectMapper;
     @Autowired
@@ -57,6 +62,7 @@ public class WebSocketService {
             payload -> payload
                     .flatMap(this.payloadToJsonNode)
                     .flatMap(this.jsonNodeToDto)
+                    .flatMap(this.addBinanceRule)
                     .doOnNext(this.sendMarketSocketResponseDto)
                     .flatMap(this.dtoToDocument)
                     .doOnNext(this.saveDocumentToDB)
@@ -89,6 +95,16 @@ public class WebSocketService {
                 .onErrorReturn("error mapping payloadAsJsonNode to dto");
     }
 
+    private Function<? super Object, ? extends Publisher<?>> addBinanceRule = payloadAsDto -> {
+
+        Mono<Object> dto = Mono.just(payloadAsDto);
+
+        if (payloadAsDto instanceof DepthResponse) return dto
+                .cast(DepthResponse.class)
+                .doOnNext(depthService::orderBookCorrectlyRule8);
+
+        return dto;
+    };
 
     private final Consumer<Object> sendMarketSocketResponseDto = obj -> {
         if (obj instanceof MarketSocketResponseDto) {
@@ -144,8 +160,6 @@ public class WebSocketService {
                 .flatMap(marketSocketResponseRepository::save);
         else if (obj instanceof Depth) document
                 .cast(Depth.class)
-                .doOnNext(depth -> depth.getAsks().removeIf(asks -> asks.contains(0.00f)))
-                .doOnNext(depth -> depth.getBids().removeIf(bids -> bids.contains(0.00f)))
                 .flatMap(depthRepository::save);
         else if (obj instanceof AggTrade) document
                 .cast(AggTrade.class)
