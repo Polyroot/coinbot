@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.ConnectableFlux;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -153,40 +154,48 @@ public class WebSocketService {
 
     private final Consumer<Object> saveDocumentToDB = obj -> {
 
-        Flux<Object> document = Flux.just(obj);
+        Mono<Object> document = Mono.just(obj);
 
         if (obj instanceof MarketSocketResponse) document
                 .cast(MarketSocketResponse.class)
-                .flatMap(marketSocketResponseRepository::save);
+                .flatMap(marketSocketResponseRepository::save)
+                .subscribe();
         else if (obj instanceof Depth) document
                 .cast(Depth.class)
-                .flatMap(depthRepository::save);
+                .flatMap(depthRepository::save)
+                .subscribe();
         else if (obj instanceof AggTrade) document
                 .cast(AggTrade.class)
-                .flatMap(aggTradeRepository::save);
+                .flatMap(aggTradeRepository::save)
+                .subscribe();
         else if (obj instanceof Trade) document
                 .cast(Trade.class)
-                .flatMap(tradeRepository::save);
+                .flatMap(tradeRepository::save)
+                .subscribe();
         else if (obj instanceof KLine) document
                 .cast(KLine.class)
-                .flatMap(kLineRepository::save);
+                .flatMap(kLineRepository::save)
+                .subscribe();
         else if (obj instanceof MiniTicker) document
                 .cast(MiniTicker.class)
-                .flatMap(miniTickerRepository::save);
+                .flatMap(miniTickerRepository::save)
+                .subscribe();
         else if (obj instanceof Ticker) document
                 .cast(Ticker.class)
-                .flatMap(tickerRepository::save);
+                .flatMap(tickerRepository::save)
+                .subscribe();
         else if (obj instanceof BookTicker) document
                 .cast(BookTicker.class)
-                .flatMap(bookTickerRepository::save);
+                .flatMap(bookTickerRepository::save)
+                .subscribe();
         else if (obj instanceof MarkPrice) document
                 .cast(MarkPrice.class)
-                .flatMap(markPriceRepository::save);
+                .flatMap(markPriceRepository::save)
+                .subscribe();
         else if (obj instanceof ForceOrder) document
                 .cast(ForceOrder.class)
-                .flatMap(forceOrderRepository::save);
-
-        document.subscribe();
+                .flatMap(forceOrderRepository::save)
+                .subscribe();
 
     };
 }
