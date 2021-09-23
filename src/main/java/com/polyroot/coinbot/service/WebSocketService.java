@@ -58,7 +58,7 @@ public class WebSocketService {
                     .flatMap(this.payloadToJsonNode)
                     .flatMap(this.jsonNodeToDto)
                     .doOnNext(this.sendMarketSocketResponseDto)
-                    .map(this.dtoToDocument)
+                    .flatMap(this.dtoToDocument)
                     .doOnNext(this.saveDocumentToDB)
                     .log();
 
@@ -97,73 +97,82 @@ public class WebSocketService {
         }
     };
 
-    private final Function<Object, Object> dtoToDocument = payloadAsDto -> {
-        if (payloadAsDto instanceof MarketSocketResponseDto) {
-            MarketSocketResponseDto marketSocketResponseDto = (MarketSocketResponseDto) payloadAsDto;
-            return dtoMapper.marketSocketResponseDtoToMarketSocketResponse(marketSocketResponseDto);
-        } else if (payloadAsDto instanceof DepthResponse) {
-            DepthResponse depthResponse = (DepthResponse) payloadAsDto;
-            return dtoMapper.depthResponseToDepth(depthResponse);
-        } else if (payloadAsDto instanceof AggTradeResponse) {
-            AggTradeResponse aggTradeResponse = (AggTradeResponse) payloadAsDto;
-            return dtoMapper.aggTradeResponseToAggTrade(aggTradeResponse);
-        } else if (payloadAsDto instanceof TradeResponse) {
-            TradeResponse tradeResponse = (TradeResponse) payloadAsDto;
-            return dtoMapper.tradeResponseToTrade(tradeResponse);
-        } else if (payloadAsDto instanceof KLineResponse) {
-            KLineResponse kLineResponse = (KLineResponse) payloadAsDto;
-            return dtoMapper.kLineResponseToKLine(kLineResponse);
-        } else if (payloadAsDto instanceof MiniTickerResponse) {
-            MiniTickerResponse miniTickerResponse = (MiniTickerResponse) payloadAsDto;
-            return dtoMapper.miniTickerResponseToMiniTicker(miniTickerResponse);
-        } else if (payloadAsDto instanceof TickerResponse) {
-            TickerResponse tickerResponse = (TickerResponse) payloadAsDto;
-            return dtoMapper.tickerResponseToTicker(tickerResponse);
-        } else if (payloadAsDto instanceof BookTickerResponse) {
-            BookTickerResponse bookTickerResponse = (BookTickerResponse) payloadAsDto;
-            return dtoMapper.bookTickerResponseToBookTicker(bookTickerResponse);
-        } else if (payloadAsDto instanceof MarkPriceResponse) {
-            MarkPriceResponse markPriceResponse = (MarkPriceResponse) payloadAsDto;
-            return dtoMapper.markPriceResponseToMarkPrice(markPriceResponse);
-        } else if (payloadAsDto instanceof ForceOrderResponse) {
-            ForceOrderResponse forceOrderResponse = (ForceOrderResponse) payloadAsDto;
-            return dtoMapper.forceOrderResponseToForceOrder(forceOrderResponse);
-        }
-        return payloadAsDto;
+    private final Function<Object, Mono<Object>> dtoToDocument = payloadAsDto -> {
+
+        Mono<Object> dto = Mono.just(payloadAsDto);
+
+        if (payloadAsDto instanceof MarketSocketResponseDto) return dto
+                .cast(MarketSocketResponseDto.class)
+                .map(dtoMapper::marketSocketResponseDtoToMarketSocketResponse);
+        else if (payloadAsDto instanceof DepthResponse) return dto
+                .cast(DepthResponse.class)
+                .map(dtoMapper::depthResponseToDepth);
+        else if (payloadAsDto instanceof AggTradeResponse) return dto
+                .cast(AggTradeResponse.class)
+                .map(dtoMapper::aggTradeResponseToAggTrade);
+        else if (payloadAsDto instanceof TradeResponse) return dto
+                .cast(TradeResponse.class)
+                .map(dtoMapper::tradeResponseToTrade);
+        else if (payloadAsDto instanceof KLineResponse) return dto
+                .cast(KLineResponse.class)
+                .map(dtoMapper::kLineResponseToKLine);
+        else if (payloadAsDto instanceof MiniTickerResponse) return dto
+                .cast(MiniTickerResponse.class)
+                .map(dtoMapper::miniTickerResponseToMiniTicker);
+        else if (payloadAsDto instanceof TickerResponse) return dto
+                .cast(TickerResponse.class)
+                .map(dtoMapper::tickerResponseToTicker);
+        else if (payloadAsDto instanceof BookTickerResponse) return dto
+                .cast(BookTickerResponse.class)
+                .map(dtoMapper::bookTickerResponseToBookTicker);
+        else if (payloadAsDto instanceof MarkPriceResponse) return dto
+                .cast(MarkPriceResponse.class)
+                .map(dtoMapper::markPriceResponseToMarkPrice);
+        else if (payloadAsDto instanceof ForceOrderResponse) return dto
+                .cast(ForceOrderResponse.class)
+                .map(dtoMapper::forceOrderResponseToForceOrder);
+
+        return dto;
     };
 
     private final Consumer<Object> saveDocumentToDB = obj -> {
-        if (obj instanceof MarketSocketResponse) {
-            MarketSocketResponse marketSocketResponse = (MarketSocketResponse) obj;
-            marketSocketResponseRepository.save(marketSocketResponse).subscribe();
-        } else if (obj instanceof Depth) {
-            Depth depth = (Depth) obj;
-            depthRepository.save(depth).subscribe();
-        } else if (obj instanceof AggTrade) {
-            AggTrade aggTrade = (AggTrade) obj;
-            aggTradeRepository.save(aggTrade).subscribe();
-        } else if (obj instanceof Trade) {
-            Trade trade = (Trade) obj;
-            tradeRepository.save(trade).subscribe();
-        } else if (obj instanceof KLine) {
-            KLine kLine = (KLine) obj;
-            kLineRepository.save(kLine).subscribe();
-        } else if (obj instanceof MiniTicker) {
-            MiniTicker miniTicker = (MiniTicker) obj;
-            miniTickerRepository.save(miniTicker).subscribe();
-        } else if (obj instanceof Ticker) {
-            Ticker ticker = (Ticker) obj;
-            tickerRepository.save(ticker).subscribe();
-        } else if (obj instanceof BookTicker) {
-            BookTicker bookTicker = (BookTicker) obj;
-            bookTickerRepository.save(bookTicker).subscribe();
-        } else if (obj instanceof MarkPrice) {
-            MarkPrice markPrice = (MarkPrice) obj;
-            markPriceRepository.save(markPrice).subscribe();
-        } else if (obj instanceof ForceOrder) {
-            ForceOrder forceOrder = (ForceOrder) obj;
-            forceOrderRepository.save(forceOrder).subscribe();
-        }
+
+        Flux<Object> document = Flux.just(obj);
+
+        if (obj instanceof MarketSocketResponse) document
+                .cast(MarketSocketResponse.class)
+                .flatMap(marketSocketResponseRepository::save);
+        else if (obj instanceof Depth) document
+                .cast(Depth.class)
+                .doOnNext(depth -> depth.getAsks().removeIf(asks -> asks.contains(0.00f)))
+                .doOnNext(depth -> depth.getBids().removeIf(bids -> bids.contains(0.00f)))
+                .flatMap(depthRepository::save);
+        else if (obj instanceof AggTrade) document
+                .cast(AggTrade.class)
+                .flatMap(aggTradeRepository::save);
+        else if (obj instanceof Trade) document
+                .cast(Trade.class)
+                .flatMap(tradeRepository::save);
+        else if (obj instanceof KLine) document
+                .cast(KLine.class)
+                .flatMap(kLineRepository::save);
+        else if (obj instanceof MiniTicker) document
+                .cast(MiniTicker.class)
+                .flatMap(miniTickerRepository::save);
+        else if (obj instanceof Ticker) document
+                .cast(Ticker.class)
+                .flatMap(tickerRepository::save);
+        else if (obj instanceof BookTicker) document
+                .cast(BookTicker.class)
+                .flatMap(bookTickerRepository::save);
+        else if (obj instanceof MarkPrice) document
+                .cast(MarkPrice.class)
+                .flatMap(markPriceRepository::save);
+        else if (obj instanceof ForceOrder) document
+                .cast(ForceOrder.class)
+                .flatMap(forceOrderRepository::save);
+
+        document.subscribe();
 
     };
 }

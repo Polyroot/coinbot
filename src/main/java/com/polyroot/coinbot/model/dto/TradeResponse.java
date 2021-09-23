@@ -18,7 +18,7 @@ public class TradeResponse {
     @JsonProperty("s")
     private String symbol;
     @JsonProperty("t")
-    private ZonedDateTime startTime;
+    private ZonedDateTime time;
     @JsonProperty("p")
     private Float price;
     @JsonProperty("q")
