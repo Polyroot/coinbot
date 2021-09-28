@@ -12,20 +12,20 @@ import java.util.function.Consumer;
 
 import static reactor.core.publisher.Sinks.EmitResult.*;
 
-public class FluxPublisherAdapter {
+public class FluxPublisherAdapter<T> {
     @Getter
     private String adapterName;
 
     private final Logger logger = LoggerFactory.getLogger("FLUX ADAPTER");
 
-    private Sinks.Many loopbackSink;
+    private Sinks.Many<T> loopbackSink;
 
     @Getter
-    private Flux streamToSubscribe;
+    private final Flux<T> streamToSubscribe;
 
-    private String adapterStatusMsgTemplate = "[%s ADAPTER]: %s , %s";
+    private final String adapterStatusMsgTemplate = "[%s ADAPTER]: %s , %s";
 
-    private Consumer logErrorStatus(String status){
+    private Consumer<T> logErrorStatus(String status){
         return
                 input -> logger.info(
                         String.format(
@@ -37,9 +37,9 @@ public class FluxPublisherAdapter {
     }
 
     // firstly it's only a monitoring, later there could be some handlers implementing additional logic
-    private EnumMap<Sinks.EmitResult, Consumer> emitResultHandlers = new EnumMap<>(Sinks.EmitResult.class){
+    private final EnumMap<Sinks.EmitResult, Consumer<T>> emitResultHandlers = new EnumMap<>(Sinks.EmitResult.class){
         {
-            put(FAIL_TERMINATED,logErrorStatus("FAIL_TERMINATED"));
+            put(FAIL_TERMINATED, logErrorStatus("FAIL_TERMINATED"));
             put(FAIL_OVERFLOW, logErrorStatus("FAIL_OVERFLOW"));
             put(FAIL_CANCELLED, logErrorStatus("FAIL_OVERFLOW"));
             put(FAIL_NON_SERIALIZED, msg -> {
@@ -51,7 +51,7 @@ public class FluxPublisherAdapter {
                 });
                 logErrorStatus("RETRY FAIL_NON_SERIALIZED");
             });
-            put(FAIL_ZERO_SUBSCRIBER,logErrorStatus("FAIL_ZERO_SUBSCRIBER"));
+            put(FAIL_ZERO_SUBSCRIBER, logErrorStatus("FAIL_ZERO_SUBSCRIBER"));
         }
     };
 
@@ -63,8 +63,8 @@ public class FluxPublisherAdapter {
     }
 
     @Getter
-    private Consumer streamInput =
-            message ->{
+    private final Consumer<T> streamInput =
+            message -> {
                 Sinks.EmitResult sinkResult = loopbackSink.tryEmitNext(message);
                 if (sinkResult.isFailure()){
                     if (emitResultHandlers.containsKey(sinkResult)){

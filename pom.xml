@@ -14,7 +14,7 @@
     <name>coinbot</name>
     <description>coinbot</description>
     <properties>
-        <java.version>14</java.version>
+        <java.version>17</java.version>
         <maven-compiler.version>3.8.1</maven-compiler.version>
         <mapstruct.version>1.4.2.Final</mapstruct.version>
         <mapstruct-lombok.version>0.2.0</mapstruct-lombok.version>
@@ -100,6 +100,8 @@
                             <version>${mapstruct-lombok.version}</version>
                         </path>
                     </annotationProcessorPaths>
+                    <source>16</source>
+                    <target>16</target>
                 </configuration>
             </plugin>
         </plugins>

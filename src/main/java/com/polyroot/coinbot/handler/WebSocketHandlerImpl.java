@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
 public class WebSocketHandlerImpl implements WebSocketHandler {
 
     @Autowired
-    private FluxAdaptersManager fluxAdaptersManager;
+    private FluxAdaptersManager<MarketSocketRequestDto> fluxAdaptersManager;
     @Autowired
     private ObjectMapper objectMapper;
     @Autowired

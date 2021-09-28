@@ -14,13 +14,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.ConnectableFlux;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
-
 
 import static com.polyroot.coinbot.service.predicate.WebSocketPredicates.*;
 
@@ -56,7 +54,7 @@ public class WebSocketService {
     @Autowired
     private DtoMapper dtoMapper;
     @Autowired
-    private MonoAdaptersManager monoManager;
+    private MonoAdaptersManager<MarketSocketResponseDto> monoManager;
 
     @Getter
     private final Function<Flux<String>, Flux<Object>> businessLogic =
@@ -89,14 +87,13 @@ public class WebSocketService {
         return Flux.empty();
     };
 
-
     private Mono<Object> getMappedDto(JsonNode payloadAsJsonNode, Class aClass) {
         return Mono.fromCallable(() -> objectMapper.treeToValue(payloadAsJsonNode, aClass))
                 .doOnError(e -> log.debug(e.getLocalizedMessage(), e))
                 .onErrorReturn("error mapping payloadAsJsonNode to dto");
     }
 
-    private Function<? super Object, ? extends Publisher<?>> addBinanceRule = payloadAsDto -> {
+    private final Function<? super Object, ? extends Publisher<?>> addBinanceRule = payloadAsDto -> {
 
         Mono<Object> dto = Mono.just(payloadAsDto);
 
@@ -108,10 +105,9 @@ public class WebSocketService {
     };
 
     private final Consumer<Object> sendMarketSocketResponseDto = obj -> {
-        if (obj instanceof MarketSocketResponseDto) {
-            MarketSocketResponseDto marketSocketResponseDto = (MarketSocketResponseDto) obj;
-            monoManager.getInput(marketSocketResponseDto.getId().toString()).accept(marketSocketResponseDto);
-        }
+        if (obj instanceof MarketSocketResponseDto marketSocketResponseDto)
+            monoManager.getInput(marketSocketResponseDto.getId().toString())
+                    .accept(marketSocketResponseDto);
     };
 
     private final Function<Object, Mono<Object>> dtoToDocument = payloadAsDto -> {

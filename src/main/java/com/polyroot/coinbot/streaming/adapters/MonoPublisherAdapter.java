@@ -13,16 +13,16 @@ import java.util.function.Consumer;
 import static reactor.core.publisher.Sinks.EmitResult.*;
 
 
-public class MonoPublisherAdapter {
+public class MonoPublisherAdapter<T> {
 
     @Getter
     private String adapterName;
 
     private final Logger logger = LoggerFactory.getLogger("FLUX ADAPTER");
 
-    private Sinks.One loopbackSink;
+    private Sinks.One<T> loopbackSink;
     @Getter
-    private Mono monoToSubscribe;
+    private final Mono<T> monoToSubscribe;
 
     public MonoPublisherAdapter(String adapterName){
         this.loopbackSink = Sinks.one();
@@ -32,7 +32,7 @@ public class MonoPublisherAdapter {
     }
 
     // firstly it's only a monitoring, later there could be some handlers implementing additional logic
-    private EnumMap<Sinks.EmitResult, Consumer> emitResultHandlers = new EnumMap<>(Sinks.EmitResult.class){
+    private final EnumMap<Sinks.EmitResult, Consumer<T>> emitResultHandlers = new EnumMap<>(Sinks.EmitResult.class){
         {
             put(FAIL_TERMINATED,logErrorStatus("FAIL_TERMINATED"));
             put(FAIL_OVERFLOW, logErrorStatus("FAIL_OVERFLOW"));
@@ -51,13 +51,13 @@ public class MonoPublisherAdapter {
     };
 
     @Getter
-    private Consumer monoInput = item -> {
-        var emitResult = loopbackSink.tryEmitValue(item);
+    private final Consumer<T> monoInput = item -> {
+        loopbackSink.tryEmitValue(item);
     };
 
-    private String adapterStatusMsgTemplate = "[%s ADAPTER]: %s , %s";
+    private final String adapterStatusMsgTemplate = "[%s ADAPTER]: %s , %s";
 
-    private Consumer logErrorStatus(String status){
+    private Consumer<T> logErrorStatus(String status){
         return
                 input -> logger.info(
                         String.format(

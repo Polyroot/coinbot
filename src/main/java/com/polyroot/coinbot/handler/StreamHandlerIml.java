@@ -4,6 +4,7 @@ import com.polyroot.coinbot.model.dto.MarketSocketRequestDto;
 import com.polyroot.coinbot.model.dto.MarketSocketResponseDto;
 import com.polyroot.coinbot.service.StreamService;
 import com.polyroot.coinbot.streaming.manage.MonoAdaptersManager;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -12,12 +13,13 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 @Component
+@Slf4j
 public class StreamHandlerIml {
 
     @Autowired
     private StreamService streamService;
     @Autowired
-    private MonoAdaptersManager monoManager;
+    private MonoAdaptersManager<MarketSocketResponseDto> monoManager;
 
     public Mono<ServerResponse> start(ServerRequest request) {
 
@@ -32,7 +34,7 @@ public class StreamHandlerIml {
 
     }
 
-    private Mono<MarketSocketRequestDto> getMarketSocketResponseDto(MarketSocketRequestDto marketSocketRequestDto) {
+    private Mono<MarketSocketResponseDto> getMarketSocketResponseDto(MarketSocketRequestDto marketSocketRequestDto) {
         return monoManager.getOutput(marketSocketRequestDto.getId().toString());
     }
 
