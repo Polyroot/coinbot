@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -63,6 +64,7 @@ public class WebSocketService {
                     .flatMap(this.jsonNodeToDto)
                     .flatMap(this.addBinanceRule)
                     .doOnNext(this.sendMarketSocketResponseDto)
+                    .publishOn(Schedulers.boundedElastic()) //позволяет ускорить на 15%
                     .flatMap(this.dtoToDocument)
                     .doOnNext(this.saveDocumentToDB)
                     .log();

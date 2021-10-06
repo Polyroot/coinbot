@@ -14,6 +14,4 @@ public class CoinbotApplication {
         SpringApplication.run(CoinbotApplication.class, args);
     }
 
-
-
 }
