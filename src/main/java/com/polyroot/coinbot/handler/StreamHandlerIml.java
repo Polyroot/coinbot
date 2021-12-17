@@ -23,7 +23,7 @@ public class StreamHandlerIml {
 
         return Mono.fromCallable(() -> UUID.randomUUID().toString())
                 .doOnNext(adapterRequestResponse.forwardRequestToFluxSink(request, "test"))
-                .flatMap(rqId -> adapterRequestResponse.getResponseFromMonoStream(rqId))
+                .flatMap(adapterRequestResponse.getResponseFromMonoStream())
                 .switchIfEmpty(notFound);
 
     }

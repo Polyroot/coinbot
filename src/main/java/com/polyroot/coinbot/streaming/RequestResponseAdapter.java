@@ -10,6 +10,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 @Service
 public class RequestResponseAdapter {
@@ -27,8 +28,8 @@ public class RequestResponseAdapter {
                 .subscribe();
     }
 
-    public Mono<ServerResponse> getResponseFromMonoStream(String responseId) {
-        return streamMonoResponse.getOutput(responseId);
+    public Function<String, Mono<ServerResponse>> getResponseFromMonoStream() {
+        return responseId -> streamMonoResponse.getOutput(responseId);
     }
 
 }

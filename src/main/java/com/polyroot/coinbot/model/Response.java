@@ -15,13 +15,13 @@ public enum Response {
     ERROR(400, new TestResponse("error", "Sukaaa"));
 
     private int responseCode;
-    private TestResponse response;
+    private TestResponse responseBody;
 
     public Mono<ServerResponse> monoServerResponse() {
 
         return ServerResponse
                 .status(responseCode)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(response), TestResponse.class);
+                .body(Mono.just(responseBody), TestResponse.class);
     }
 }
