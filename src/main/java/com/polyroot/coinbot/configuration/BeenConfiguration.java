@@ -17,11 +17,6 @@ import java.util.TimeZone;
 public class BeenConfiguration {
 
     @Bean
-    public WebSocketClient webSocketClient(){
-        return new ReactorNettyWebSocketClient();
-    }
-
-    @Bean
     public ObjectMapper objectMapper() {
         return new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)

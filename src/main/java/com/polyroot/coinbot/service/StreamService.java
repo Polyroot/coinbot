@@ -1,45 +1,44 @@
 package com.polyroot.coinbot.service;
 
-import com.polyroot.coinbot.mapper.DtoMapper;
-import com.polyroot.coinbot.model.dto.MarketSocketRequestDto;
-import com.polyroot.coinbot.repository.MarketSocketRequestRepository;
+import com.polyroot.coinbot.model.dto.IncomingRequestEnvelope;
+import com.polyroot.coinbot.model.dto.TestDto;
 import com.polyroot.coinbot.streaming.manage.FluxAdaptersManager;
-import lombok.Getter;
+import com.polyroot.coinbot.streaming.manage.MonoAdaptersManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
+import org.springframework.web.reactive.function.server.ServerResponse;
 
-import java.util.function.Consumer;
-import java.util.function.Function;
+import static com.polyroot.coinbot.model.Response.ERROR;
+import static com.polyroot.coinbot.model.Response.OK;
 
 @Service
 @Slf4j
 public class StreamService {
 
     @Autowired
-    private MarketSocketRequestRepository marketSocketRequestRepository;
+    private FluxAdaptersManager<IncomingRequestEnvelope> fluxManager;
+
     @Autowired
-    private DtoMapper dtoMapper;
-    @Autowired
-    private FluxAdaptersManager fluxAdaptersManager;
+    private MonoAdaptersManager<ServerResponse> monoManager;
 
-    @Getter
-    private final Function<Mono<MarketSocketRequestDto>, Mono<MarketSocketRequestDto>> businessLogic =
-            marketSocketRequestDto -> {
+    @Bean(name="configMainLogicNode")
+    public void configMainFluxChain() {
 
-                Consumer<MarketSocketRequestDto> marketSocketRequestDtoSink =
-                        fluxAdaptersManager.getSink("market-socket-request-dto");
-
-                return marketSocketRequestDto
-                        .doOnNext(saveMarketSocketRequestToDb())
-                        .doOnNext(marketSocketRequestDtoSink);
-            };
-
-    private Consumer<MarketSocketRequestDto> saveMarketSocketRequestToDb() {
-        return marketSocketRequestDto -> Mono.just(marketSocketRequestDto)
-                .map(dtoMapper::marketSocketRequestDtoToMarketSocketRequest)
-                .flatMap(marketSocketRequestRepository::save)
+        fluxManager.getStream("test")
+                .log("----------")
+                .flatMap(incomingRequestEnvelope ->
+                        incomingRequestEnvelope.getRequest()
+                                .bodyToMono(TestDto.class)
+                                .map(testDto -> Integer.parseInt(testDto.getOne()))
+                                .doOnNext(testDto -> OK.monoServerResponse()
+                                        .doOnNext(monoManager.getInput(incomingRequestEnvelope.getRqId()))
+                                        .subscribe())
+                                .onErrorContinue((throwable, o) -> ERROR.monoServerResponse()
+                                        .doOnNext(monoManager.getInput(incomingRequestEnvelope.getRqId()))
+                                        .subscribe())
+                )
                 .subscribe();
     }
 }
