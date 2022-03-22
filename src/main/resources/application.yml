@@ -1,9 +1,21 @@
+logging:
+  level:
+    com:
+     trace:
+      customer: debug
 spring:
   data:
     mongodb:
       database: coinbot
       host: localhost
       port: 27017
+  sleuth:
+    opentracing:
+      enabled: true
+  reactor:
+      # try decorate_queues and if that fails decorate_on_each
+      # decorate_on_each can lead to dramatic performance degradation
+      instrumentation-type: decorate_queues
 
 # rsocket для сервера, но у меня только клиент
 #  rsocket:

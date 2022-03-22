@@ -5,11 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.polyroot.coinbot.mapper.DtoMapper;
 import org.mapstruct.factory.Mappers;
+import org.springframework.cloud.sleuth.Span;
+import org.springframework.cloud.sleuth.instrument.web.WebFluxSleuthOperators;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.socket.client.ReactorNettyWebSocketClient;
 import org.springframework.web.reactive.socket.client.WebSocketClient;
 
+import javax.servlet.annotation.WebFilter;
 import java.time.ZoneId;
 import java.util.TimeZone;
 

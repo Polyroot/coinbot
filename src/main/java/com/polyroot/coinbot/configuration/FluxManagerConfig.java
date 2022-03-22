@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class FluxManagerConfig {
     @Bean
-    public FluxAdaptersManager<IncomingRequestEnvelope> initFluxManager(){
+    public FluxAdaptersManager initFluxManager(){
         return new FluxAdaptersManager<>();
     }
 
